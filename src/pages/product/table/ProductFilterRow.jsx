@@ -1,13 +1,26 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { apiQueryCategories } from "apis/productApi";
 import { TableCell, TableRow } from "components/table";
 
-export default function ProductFilterRow({
-  filters,
-  setFilters,
-  categoryOptions,
-  isLoadingCategory,
-}) {
+export default function ProductFilterRow({ filters, setFilters }) {
   const { isAsc, categoryId } = filters;
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiQueryCategories();
+        setCategoryOptions(result);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptions();
+  }, []);
 
   const toggleOrder = () => {
     setFilters({ ...filters, isAsc: !filters.isAsc });
@@ -30,7 +43,7 @@ export default function ProductFilterRow({
       <TableCell className="w-1/5"></TableCell>
       <TableCell className="w-1/5"></TableCell>
       <TableCell className="w-1/5">
-        {isLoadingCategory ? (
+        {isLoading ? (
           "Loading..."
         ) : (
           <select
