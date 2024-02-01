@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "components/Navbar";
 import Home from "pages/Home";
+import ProductList from "pages/product/ProductList";
 import UserList from "pages/user/UserList";
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/product" element={<ProductList />} />
           <Route path="/user" element={<UserList />} />
         </Routes>
       </div>
