@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { apiQueryProductDetail, apiQueryProductIds } from "apis/productApi";
+import {
+  apiQueryCategories,
+  apiQueryProductDetail,
+  apiQueryProductIds,
+} from "apis/productApi";
 import Button from "components/Button";
 import PageSizeSelect from "components/SelectPageSize";
 import PaginationBar from "components/PaginationBar";
@@ -17,6 +21,8 @@ export default function ProductList() {
   const [productDetails, setProductDetails] = useState({});
   const [isLoadingIds, setIsLoadingIds] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [isLoadingCategory, setIsLoadingCategory] = useState(false);
   const [refetchNum, setRefetchNum] = useState(0);
   const [filters, setFilters] = useState({
     isAsc: true,
@@ -66,6 +72,21 @@ export default function ProductList() {
     }
   }, [productIds, pageSize, curPage]);
 
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setIsLoadingCategory(true);
+        const result = await apiQueryCategories();
+        setCategoryOptions(result);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoadingCategory(false);
+      }
+    };
+    fetchOptions();
+  }, []);
+
   const refetch = () => {
     setRefetchNum(refetchNum + 1);
   };
@@ -82,7 +103,12 @@ export default function ProductList() {
 
       <div className="mt-10 w-4/5">
         <ProductHeaderRow />
-        <ProductFilterRow filters={filters} setFilters={setFilters} />
+        <ProductFilterRow
+          filters={filters}
+          setFilters={setFilters}
+          categoryOptions={categoryOptions}
+          isLoadingCategory={isLoadingCategory}
+        />
         {isLoadingIds || isLoadingDetails ? (
           <LoadingTable pageSize={pageSize} />
         ) : (
