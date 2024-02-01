@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { apiQueryUsers } from "apis/userApi";
 import Button from "components/Button";
-import { UserHeaderRow, UserFilterRow, UserRow } from "./table";
+import { UserHeaderRow, UserFilterRow, UserRow, LoadingRow } from "./table";
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
   const [filters, setFilters] = useState({ isAsc: true });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const userList = await apiQueryUsers(filters);
         setUsers(userList);
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
@@ -31,9 +35,11 @@ export default function UserList() {
       <div className="mt-10 w-4/5">
         <UserHeaderRow />
         <UserFilterRow filters={filters} setFilters={setFilters} />
-        {users.map((user) => (
-          <UserRow key={user.id} user={user} />
-        ))}
+        {isLoading ? (
+          <LoadingRow />
+        ) : (
+          users.map((user) => <UserRow key={user.id} user={user} />)
+        )}
       </div>
     </div>
   );
