@@ -7,6 +7,11 @@ export default function UserList() {
   const [users, setUsers] = useState([]);
   const [filters, setFilters] = useState({ isAsc: true });
   const [isLoading, setIsLoading] = useState(false);
+  const [refetchNum, setRefetchNum] = useState(0);
+
+  const refetch = () => {
+    setRefetchNum(refetchNum + 1);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,13 +26,13 @@ export default function UserList() {
       }
     };
     fetchData();
-  }, [filters]);
+  }, [filters, refetchNum]);
 
   return (
     <div className="mt-10 flex w-full flex-col items-center">
       <header className="flex items-center space-x-3">
         <h1 className="text-2xl font-bold">User List</h1>
-        <Button onClick={() => {}} color="blue">
+        <Button onClick={refetch} color="blue">
           Reload
         </Button>
       </header>
