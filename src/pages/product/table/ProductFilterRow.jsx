@@ -1,19 +1,24 @@
 import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { TableCell, TableRow } from "components/table";
+import { setFilters } from "../productSlice";
 
-export default function ProductFilterRow({
-  filters,
-  setFilters,
-  categoryOptions,
-  isLoadingCategory,
-}) {
+export default function ProductFilterRow() {
+  const dispatch = useDispatch();
+  const categoryOptions = useSelector(
+    (state) => state.products.categoryOptions
+  );
+  const isLoadingCategory = useSelector(
+    (state) => state.products.isLoadingCategory
+  );
+  const filters = useSelector((state) => state.products.filters);
   const { isAsc, categoryId } = filters;
 
   const toggleOrder = () => {
-    setFilters({ ...filters, isAsc: !filters.isAsc });
+    dispatch(setFilters({ ...filters, isAsc: !filters.isAsc }));
   };
   const handleChangeCategory = (e) => {
-    setFilters({ ...filters, categoryId: e.target.value });
+    dispatch(setFilters({ ...filters, categoryId: e.target.value }));
   };
 
   return (

@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  apiQueryCategories,
-  apiQueryProductDetail,
-  apiQueryProductIds,
-} from "apis/productApi";
+import { useDispatch, useSelector } from "react-redux";
 import Button from "components/Button";
 import PageSizeSelect from "components/SelectPageSize";
 import PaginationBar from "components/PaginationBar";
@@ -13,89 +9,57 @@ import {
   ProductRow,
   LoadingTable,
 } from "./table";
-
-const DEFAULT_PAGE_SIZE = 3;
+import {
+  fetchProductIds,
+  fetchProductDetails,
+  fetchCategoryOptions,
+} from "./productSlice";
+import { setCurPage, setPageSize } from "./productSlice";
 
 export default function ProductList() {
-  const [productIds, setProductIds] = useState([]);
-  const [productDetails, setProductDetails] = useState({});
-  const [isLoadingIds, setIsLoadingIds] = useState(false);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [categoryOptions, setCategoryOptions] = useState([]);
-  const [isLoadingCategory, setIsLoadingCategory] = useState(false);
+  const dispatch = useDispatch();
+  const productIds = useSelector((state) => state.products.productIds);
+  const isLoadingIds = useSelector((state) => state.products.isLoadingIds);
+  const pageSize = useSelector((state) => state.products.pageSize);
+  const curPage = useSelector((state) => state.products.curPage);
+  const filters = useSelector((state) => state.products.filters);
   const [refetchNum, setRefetchNum] = useState(0);
-  const [filters, setFilters] = useState({
-    isAsc: true,
-    categoryId: "",
-  });
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [curPage, setCurPage] = useState(0);
 
   useEffect(() => {
-    const fetchAllIds = async () => {
-      setCurPage(0);
-      setIsLoadingIds(true);
-      try {
-        const ids = await apiQueryProductIds(filters); // [0, 1, 2, ...]
-        setProductIds(ids);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoadingIds(false);
-      }
-    };
-    fetchAllIds();
+    dispatch(fetchProductIds(filters));
   }, [refetchNum, filters]);
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        setIsLoadingDetails(true);
-        const curPageIds = productIds.slice(
-          pageSize * curPage,
-          pageSize * (curPage + 1)
-        );
-        const detailList = await Promise.all(
-          curPageIds.map((id) => apiQueryProductDetail(id)) // [{id: 0, name: 'backpack'}, {id: 1, name: 'shirts'}, ...]
-        );
-        setProductDetails(
-          detailList.reduce((acc, cur) => ({ ...acc, [cur.id]: cur }), {}) // {0: {id: 0, name: 'backpack'}, 1:{id: 1, name: 'shirts'}, ...}
-        );
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoadingDetails(false);
-      }
-    };
     if (productIds.length > 0) {
-      fetchDetails();
+      const curPageIds = productIds.slice(
+        pageSize * curPage,
+        pageSize * (curPage + 1)
+      );
+      dispatch(fetchProductDetails(curPageIds));
     }
   }, [productIds, pageSize, curPage]);
 
   useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        setIsLoadingCategory(true);
-        const result = await apiQueryCategories();
-        setCategoryOptions(result);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoadingCategory(false);
-      }
-    };
-    fetchOptions();
+    dispatch(fetchCategoryOptions());
   }, []);
 
   const refetch = () => {
     setRefetchNum(refetchNum + 1);
   };
 
+  const curPageIds = productIds.slice(
+    pageSize * curPage,
+    pageSize * (curPage + 1)
+  );
+
   return (
     <div className="mt-10 flex w-full flex-col items-center">
       <header className="flex items-center space-x-3">
         <h1 className="text-2xl font-bold">Product List</h1>
-        <PageSizeSelect pageSize={pageSize} setPageSize={setPageSize} />
+        <PageSizeSelect
+          pageSize={pageSize}
+          setPageSize={(num) => dispatch(setPageSize(num))}
+        />
         <Button onClick={refetch} color="blue">
           Reload
         </Button>
@@ -103,21 +67,11 @@ export default function ProductList() {
 
       <div className="mt-10 w-4/5">
         <ProductHeaderRow />
-        <ProductFilterRow
-          filters={filters}
-          setFilters={setFilters}
-          categoryOptions={categoryOptions}
-          isLoadingCategory={isLoadingCategory}
-        />
-        {isLoadingIds || isLoadingDetails ? (
+        <ProductFilterRow />
+        {isLoadingIds ? (
           <LoadingTable pageSize={pageSize} />
         ) : (
-          productIds.map(
-            (id) =>
-              productDetails[id] && (
-                <ProductRow key={id} product={productDetails[id]} />
-              )
-          )
+          curPageIds.map((id) => <ProductRow key={id} productId={id} />)
         )}
       </div>
       <div className="my-10">
@@ -126,7 +80,7 @@ export default function ProductList() {
             totalLength={productIds.length}
             pageSize={pageSize}
             curPage={curPage}
-            setCurPage={setCurPage}
+            setCurPage={(num) => dispatch(setCurPage(num))}
           />
         )}
       </div>
