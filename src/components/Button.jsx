@@ -24,7 +24,7 @@ export default function Button({
 }) {
   return (
     <button
-      className={`rounded-md px-3 py-2 ${colorMap[color]} ${className} min-w-24`}
+      className={`rounded-md px-3 py-2 ${colorMap[color]} ${className} min-w-24 font-bold`}
       onClick={onClick}
     >
       {children}

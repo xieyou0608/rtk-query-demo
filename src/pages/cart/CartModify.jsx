@@ -7,6 +7,7 @@ import { apiQueryProductDetail } from "apis/productApi";
 import Button from "components/Button";
 import FullScreenLoading from "components/FullScreenLoading";
 import { TableCell, TableHeaderRow, TableRow } from "components/table";
+import SelectProductModal from "./SelectProductModal";
 
 export default function CartModify() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function CartModify() {
   const [productList, setProductList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,6 +79,15 @@ export default function CartModify() {
     setCartInfo({ ...cartInfo, products: newProducts });
   };
 
+  const handleAddProduct = (product) => {
+    setCartInfo({
+      ...cartInfo,
+      products: [...cartInfo.products, { productId: product.id, quantity: 1 }],
+    });
+    setProductList([...productList, product]);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="mt-10 flex w-full flex-col items-center">
       <header className="flex items-center space-x-10">
@@ -108,6 +119,15 @@ export default function CartModify() {
             <div>{new Date(cartInfo.date).toLocaleString()}</div>
 
             <div>ProductList</div>
+            <div>
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                color="blue"
+                className="w-fit"
+              >
+                Select new Product
+              </Button>
+            </div>
           </div>
           <div>
             <TableHeaderRow>
@@ -151,6 +171,15 @@ export default function CartModify() {
       </footer>
 
       {isSaving && <FullScreenLoading>Saving...</FullScreenLoading>}
+
+      <SelectProductModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        existedProductIds={cartInfo.products?.map(
+          (product) => product.productId
+        )}
+        onAdd={handleAddProduct}
+      />
     </div>
   );
 }
