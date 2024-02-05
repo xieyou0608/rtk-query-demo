@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useQuery } from "hooks/useQuery";
+import { apiQueryProductIds } from "apis/productApi";
 import Button from "components/Button";
 import PageSizeSelect from "components/SelectPageSize";
 import PaginationBar from "components/PaginationBar";
@@ -9,43 +11,23 @@ import {
   ProductRow,
   LoadingTable,
 } from "./table";
-import {
-  fetchProductIds,
-  fetchProductDetails,
-  fetchCategoryOptions,
-} from "./productSlice";
 import { setCurPage, setPageSize } from "./productSlice";
 
 export default function ProductList() {
   const dispatch = useDispatch();
-  const productIds = useSelector((state) => state.products.productIds);
-  const isLoadingIds = useSelector((state) => state.products.isLoadingIds);
   const pageSize = useSelector((state) => state.products.pageSize);
   const curPage = useSelector((state) => state.products.curPage);
   const filters = useSelector((state) => state.products.filters);
-  const [refetchNum, setRefetchNum] = useState(0);
 
-  useEffect(() => {
-    dispatch(fetchProductIds(filters));
-  }, [refetchNum, filters]);
-
-  useEffect(() => {
-    if (productIds.length > 0) {
-      const curPageIds = productIds.slice(
-        pageSize * curPage,
-        pageSize * (curPage + 1)
-      );
-      dispatch(fetchProductDetails(curPageIds));
-    }
-  }, [productIds, pageSize, curPage]);
-
-  useEffect(() => {
-    dispatch(fetchCategoryOptions());
-  }, []);
-
-  const refetch = () => {
-    setRefetchNum(refetchNum + 1);
-  };
+  const {
+    data: productIds,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryFunc: () => apiQueryProductIds(filters),
+    queryKeys: [filters],
+    initData: [],
+  });
 
   const curPageIds = productIds.slice(
     pageSize * curPage,
@@ -68,14 +50,14 @@ export default function ProductList() {
       <div className="mt-10 w-4/5">
         <ProductHeaderRow />
         <ProductFilterRow />
-        {isLoadingIds ? (
+        {isLoading ? (
           <LoadingTable pageSize={pageSize} />
         ) : (
           curPageIds.map((id) => <ProductRow key={id} productId={id} />)
         )}
       </div>
       <div className="my-10">
-        {!isLoadingIds && (
+        {!isLoading && (
           <PaginationBar
             totalLength={productIds.length}
             pageSize={pageSize}

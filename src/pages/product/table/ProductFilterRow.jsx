@@ -1,16 +1,16 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useQuery } from "hooks/useQuery";
+import { apiQueryCategories } from "apis/productApi";
 import { TableCell, TableRow } from "components/table";
 import { setFilters } from "../productSlice";
 
 export default function ProductFilterRow() {
+  const { data: categoryOptions, isLoading } = useQuery({
+    queryFunc: apiQueryCategories,
+  });
   const dispatch = useDispatch();
-  const categoryOptions = useSelector(
-    (state) => state.products.categoryOptions
-  );
-  const isLoadingCategory = useSelector(
-    (state) => state.products.isLoadingCategory
-  );
+
   const filters = useSelector((state) => state.products.filters);
   const { isAsc, categoryId } = filters;
 
@@ -35,7 +35,7 @@ export default function ProductFilterRow() {
       <TableCell className="w-1/5"></TableCell>
       <TableCell className="w-1/5"></TableCell>
       <TableCell className="w-1/5">
-        {isLoadingCategory ? (
+        {isLoading ? (
           "Loading..."
         ) : (
           <select

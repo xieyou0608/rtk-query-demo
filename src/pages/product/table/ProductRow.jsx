@@ -1,17 +1,16 @@
 import React from "react";
-import { useSelector } from "react-redux";
+import { useQuery } from "hooks/useQuery";
+import { apiQueryProductDetail } from "apis/productApi";
 import { TableCell, TableRow } from "components/table";
 import { LoadingRow } from "./LoadingTable";
 
 export default function ProductRow({ productId }) {
-  const product = useSelector(
-    (state) => state.products.productDetails[productId]
-  );
-  const isLoadingDetails = useSelector(
-    (state) => state.products.isLoadingDetails
-  );
+  const { data: product, isLoading } = useQuery({
+    queryFunc: () => apiQueryProductDetail(productId),
+    queryKeys: [productId],
+  });
 
-  return isLoadingDetails || !product ? (
+  return isLoading || !product ? (
     <LoadingRow />
   ) : (
     <TableRow className="h-32">
