@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { apiQueryProductIds } from "apis/productApi";
+import { useQuery } from "hooks/useQuery";
 import Button from "components/Button";
 import PageSizeSelect from "components/SelectPageSize";
 import PaginationBar from "components/PaginationBar";
@@ -13,35 +14,25 @@ import {
 const DEFAULT_PAGE_SIZE = 3;
 
 export default function ProductList() {
-  const [productIds, setProductIds] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [refetchNum, setRefetchNum] = useState(0);
   const [filters, setFilters] = useState({
     isAsc: true,
     categoryId: "",
   });
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [curPage, setCurPage] = useState(0);
+  const {
+    data: productIds,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryFunc: () => apiQueryProductIds(filters),
+    queryKeys: [filters],
+    initData: [],
+  });
 
   useEffect(() => {
-    const fetchAllIds = async () => {
-      setCurPage(0);
-      setIsLoading(true);
-      try {
-        const ids = await apiQueryProductIds(filters); // [0, 1, 2, ...]
-        setProductIds(ids);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAllIds();
-  }, [refetchNum, filters]);
-
-  const refetch = () => {
-    setRefetchNum(refetchNum + 1);
-  };
+    setCurPage(0);
+  }, [filters]);
 
   const currentIds = productIds.slice(
     pageSize * curPage,

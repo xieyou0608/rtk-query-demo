@@ -1,26 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { apiQueryProductDetail } from "apis/productApi";
+import { useQuery } from "hooks/useQuery";
 import { TableCell, TableRow } from "components/table";
 import { LoadingRow } from "./LoadingTable";
 
 export default function ProductRow({ productId }) {
-  const [product, setProduct] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        setIsLoading(true);
-        const detail = await apiQueryProductDetail(productId);
-        setProduct(detail);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDetails();
-  }, [productId]);
+  const { data: product, isLoading } = useQuery({
+    queryFunc: () => apiQueryProductDetail(productId),
+    queryKeys: [productId],
+  });
 
   if (isLoading) {
     return <LoadingRow />;

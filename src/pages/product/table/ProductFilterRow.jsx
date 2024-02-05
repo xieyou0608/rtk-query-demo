@@ -1,26 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useQuery } from "hooks/useQuery";
 import { apiQueryCategories } from "apis/productApi";
 import { TableCell, TableRow } from "components/table";
 
 export default function ProductFilterRow({ filters, setFilters }) {
   const { isAsc, categoryId } = filters;
-  const [categoryOptions, setCategoryOptions] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        setIsLoading(true);
-        const result = await apiQueryCategories();
-        setCategoryOptions(result);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchOptions();
-  }, []);
+  const { data: categoryOptions, isLoading } = useQuery({
+    queryFunc: apiQueryCategories,
+  });
 
   const toggleOrder = () => {
     setFilters({ ...filters, isAsc: !filters.isAsc });
