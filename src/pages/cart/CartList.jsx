@@ -1,7 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useQuery } from "hooks/useQuery";
-import { apiQueryCartIds } from "apis/cartApi";
+import { useGetCartIdsQuery } from "store/apiSlice";
 import Button from "components/Button";
 import PaginationBar from "components/PaginationBar";
 import PageSizeSelect from "components/SelectPageSize";
@@ -13,17 +12,9 @@ export default function CartList() {
   const pageSize = useSelector((state) => state.carts.pageSize);
   const curPage = useSelector((state) => state.carts.curPage);
   const filters = useSelector((state) => state.carts.filters);
-  const {
-    data: cartIds,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryFunc: () => apiQueryCartIds(filters),
-    queryKeys: [filters],
-    initData: [],
-  });
+  const { data: cartIds, isFetching, refetch } = useGetCartIdsQuery(filters);
 
-  const curPageIds = cartIds.slice(
+  const curPageIds = cartIds?.slice(
     pageSize * curPage,
     pageSize * (curPage + 1)
   );
@@ -44,11 +35,12 @@ export default function CartList() {
       <div className="mt-10 w-4/5">
         <CartHeaderRow />
         <CartFilterRow />
-        {isLoading && <LoadingTable pageSize={pageSize} />}
-        {!isLoading && curPageIds.map((id) => <CartRow key={id} cartId={id} />)}
+        {isFetching && <LoadingTable pageSize={pageSize} />}
+        {!isFetching &&
+          curPageIds.map((id) => <CartRow key={id} cartId={id} />)}
       </div>
       <div className="my-10">
-        {!isLoading && (
+        {!isFetching && (
           <PaginationBar
             totalLength={cartIds.length}
             pageSize={pageSize}

@@ -1,10 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { TableCell, TableRow } from "components/table";
-import { useQuery } from "hooks/useQuery";
-import { apiQueryCartDetail } from "apis/cartApi";
-import { apiQueryUserDetail } from "apis/userApi";
-import { apiQueryProductDetail } from "apis/productApi";
+import {
+  useGetCartDetailQuery,
+  useGetUserDetailQuery,
+  useGetProductDetailQuery,
+} from "store/apiSlice";
 import { LoadingRow } from "./LoadingTable";
 
 export default function ({ cartId }) {
@@ -12,21 +13,13 @@ export default function ({ cartId }) {
     data: cart,
     isLoading,
     isSuccess: isCartSuccess,
-  } = useQuery({
-    queryFunc: () => apiQueryCartDetail(cartId),
-    queryKeys: [cartId],
-    initData: {},
-  });
+  } = useGetCartDetailQuery(cartId);
 
   const {
     data: user,
     isLoading: isUserLoading,
     isSuccess: isUserSuccess,
-  } = useQuery({
-    queryFunc: () => apiQueryUserDetail(cart.userId),
-    queryKeys: [cart.userId],
-    isEnabled: isCartSuccess,
-  });
+  } = useGetUserDetailQuery(cart?.userId, { skip: !isCartSuccess });
 
   if (isLoading) {
     return <LoadingRow />;
@@ -66,16 +59,12 @@ export default function ({ cartId }) {
   );
 }
 
-const ProductInfo = ({ productId, quantity, isEnabled }) => {
+const ProductInfo = ({ productId, quantity }) => {
   const {
     data: product,
     isLoading,
     isError,
-  } = useQuery({
-    queryFunc: () => apiQueryProductDetail(productId),
-    queryKeys: [productId],
-    isEnabled: isEnabled,
-  });
+  } = useGetProductDetailQuery(productId);
 
   if (isLoading) {
     return <div className="h-4 w-48 rounded-md bg-gray-300" />;
