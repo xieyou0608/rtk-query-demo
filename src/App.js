@@ -3,6 +3,7 @@ import Navbar from "components/Navbar";
 import Home from "pages/Home";
 import ProductList from "pages/product/ProductList";
 import CartList from "pages/cart/CartList";
+import CartModify from "pages/cart/CartModify";
 import UserList from "pages/user/UserList";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/product" element={<ProductList />} />
           <Route path="/cart" element={<CartList />} />
+          <Route path="/cart/:cartId" element={<CartModify />} />
           <Route path="/user" element={<UserList />} />
         </Routes>
       </div>
