@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { apiUpdateCart } from "apis/cartApi";
 import Button from "components/Button";
 import FullScreenLoading from "components/FullScreenLoading";
 import { TableCell, TableHeaderRow, TableRow } from "components/table";
 import SelectProductModal from "./SelectProductModal";
 import {
+  useEditCartMutation,
   useGetCartDetailQuery,
   useGetProductDetailQuery,
   useGetUserDetailQuery,
@@ -22,8 +22,8 @@ export default function CartModify() {
     isLoading,
     isSuccess,
   } = useGetCartDetailQuery(cartId);
+  const [updateCart, { isLoading: isSaving }] = useEditCartMutation();
   const [products, setProducts] = useState([]);
-  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -33,16 +33,10 @@ export default function CartModify() {
   }, [cartInfo, isSuccess]);
 
   const handleSaveCart = async () => {
-    setIsSaving(true);
-    try {
-      const newCartInfo = { ...cartInfo, products: products };
-      await apiUpdateCart(cartId, newCartInfo);
-      alert("Save successfully!");
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsSaving(false);
-    }
+    const newCartInfo = { ...cartInfo, products: products };
+    await updateCart(newCartInfo);
+    alert("Save successfully!");
+    navigate("/cart");
   };
 
   const handleAdd = (id) => {

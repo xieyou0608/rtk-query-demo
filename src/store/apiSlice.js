@@ -33,6 +33,13 @@ export const fakeStoreApi = createApi({
     getCartDetail: builder.query({
       query: (id) => `/carts/${id}`,
     }),
+    editCart: builder.mutation({
+      query: (cartInfo) => ({
+        url: `/carts/${cartInfo.id}`,
+        method: "PUT",
+        body: cartInfo,
+      }),
+    }),
   }),
 });
 
@@ -42,4 +49,5 @@ export const {
   useGetProductDetailQuery,
   useGetCartIdsQuery,
   useGetCartDetailQuery,
+  useEditCartMutation,
 } = fakeStoreApi;
