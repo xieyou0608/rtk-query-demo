@@ -1,53 +1,42 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { apiQueryCartDetail, apiUpdateCart } from "apis/cartApi";
-import { apiQueryUserDetail } from "apis/userApi";
-import { apiQueryProductDetail } from "apis/productApi";
+import { apiUpdateCart } from "apis/cartApi";
 import Button from "components/Button";
 import FullScreenLoading from "components/FullScreenLoading";
 import { TableCell, TableHeaderRow, TableRow } from "components/table";
 import SelectProductModal from "./SelectProductModal";
+import {
+  useGetCartDetailQuery,
+  useGetProductDetailQuery,
+  useGetUserDetailQuery,
+} from "store/apiSlice";
 
 export default function CartModify() {
   const navigate = useNavigate();
   const params = useParams();
   const cartId = params.cartId;
 
-  const [cartInfo, setCartInfo] = useState({});
-  const [userInfo, setUserInfo] = useState({});
-  const [productList, setProductList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    data: cartInfo,
+    isLoading,
+    isSuccess,
+  } = useGetCartDetailQuery(cartId);
+  const [products, setProducts] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const cartDetail = await apiQueryCartDetail(cartId);
-        const userDetail = await apiQueryUserDetail(cartDetail.userId);
-        const productDetailList = await Promise.all(
-          cartDetail.products.map((item) =>
-            apiQueryProductDetail(item.productId),
-          ),
-        );
-        setCartInfo(cartDetail);
-        setUserInfo(userDetail);
-        setProductList(productDetailList);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [cartId]);
+    if (isSuccess) {
+      setProducts(cartInfo.products);
+    }
+  }, [cartInfo, isSuccess]);
 
   const handleSaveCart = async () => {
     setIsSaving(true);
     try {
-      await apiUpdateCart(cartId, cartInfo);
+      const newCartInfo = { ...cartInfo, products: products };
+      await apiUpdateCart(cartId, newCartInfo);
       alert("Save successfully!");
     } catch (error) {
       console.log(error);
@@ -57,34 +46,24 @@ export default function CartModify() {
   };
 
   const handleAdd = (id) => {
-    const newProducts = cartInfo.products.map((item) => {
-      if (item.productId === id) {
-        const newQuantity = item.quantity + 1;
-        return { ...item, quantity: newQuantity };
-      } else {
-        return item;
-      }
-    });
-    setCartInfo({ ...cartInfo, products: newProducts });
+    const newProducts = products.map(({ productId, quantity }) => ({
+      productId,
+      quantity: productId === id ? quantity + 1 : quantity,
+    }));
+    setProducts(newProducts);
   };
   const handleSubtract = (id) => {
-    const newProducts = cartInfo.products.map((item) => {
-      if (item.productId === id && item.quantity !== 0) {
-        const newQuantity = item.quantity - 1;
-        return { ...item, quantity: newQuantity };
-      } else {
-        return item;
-      }
-    });
-    setCartInfo({ ...cartInfo, products: newProducts });
+    const newProducts = products
+      .map(({ productId, quantity }) => ({
+        productId,
+        quantity: productId === id ? quantity - 1 : quantity,
+      }))
+      .filter(({ quantity }) => quantity > 0);
+    setProducts(newProducts);
   };
 
   const handleAddProduct = (product) => {
-    setCartInfo({
-      ...cartInfo,
-      products: [...cartInfo.products, { productId: product.id, quantity: 1 }],
-    });
-    setProductList([...productList, product]);
+    setProducts([...products, { productId: product.id, quantity: 1 }]);
     setIsModalOpen(false);
   };
 
@@ -95,25 +74,14 @@ export default function CartModify() {
       </header>
 
       {isLoading && <div className="m-10">Loading...</div>}
-      {!isLoading && (
+      {isSuccess && (
         <div className="w-[80vw] lg:w-[60vw]">
           <div className="my-5 grid grid-cols-2 gap-5">
             <div>Cart Id</div>
             <div>{cartId}</div>
 
             <div>Buyer</div>
-            <div className="w-fit rounded-md bg-gray-300 p-3 shadow">
-              <div className="w-fit rounded-sm bg-sky-700 px-2 text-white">
-                No. {userInfo.id}
-              </div>
-              <div>
-                <div>
-                  Name: {userInfo.name?.firstname} {userInfo.name?.lastname}
-                </div>
-                <div>Phone: {userInfo.phone}</div>
-                <div>Email: {userInfo.email}</div>
-              </div>
-            </div>
+            <UserInfo userId={cartInfo.userId} />
 
             <div>Date</div>
             <div>{new Date(cartInfo.date).toLocaleString()}</div>
@@ -137,28 +105,14 @@ export default function CartModify() {
               <TableCell className="w-1/6">Action</TableCell>
             </TableHeaderRow>
 
-            {productList.map((product, idx) => (
-              <TableRow key={product.id}>
-                <TableCell className="w-1/6">{product.id}</TableCell>
-                <TableCell className="w-3/6">{product.title}</TableCell>
-                <TableCell className="w-1/6">
-                  {cartInfo.products[idx].quantity}
-                </TableCell>
-                <TableCell className="w-1/6 space-x-2">
-                  <button
-                    onClick={() => handleSubtract(product.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-3xl font-bold text-red-600 hover:bg-gray-300"
-                  >
-                    -
-                  </button>
-                  <button
-                    onClick={() => handleAdd(product.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-3xl font-bold text-green-600 hover:bg-gray-300"
-                  >
-                    +
-                  </button>
-                </TableCell>
-              </TableRow>
+            {products.map((product) => (
+              <ProductRow
+                key={product.productId}
+                productId={product.productId}
+                quantity={product.quantity}
+                handleAdd={handleAdd}
+                handleSubtract={handleSubtract}
+              />
             ))}
           </div>
         </div>
@@ -175,11 +129,62 @@ export default function CartModify() {
       <SelectProductModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        existedProductIds={cartInfo.products?.map(
-          (product) => product.productId
-        )}
+        existedProductIds={products.map((item) => item.id)}
         onAdd={handleAddProduct}
       />
     </div>
   );
 }
+
+const UserInfo = ({ userId }) => {
+  const { data: user, isSuccess } = useGetUserDetailQuery(userId, {
+    skip: !userId,
+  });
+  if (!isSuccess) {
+    return null;
+  }
+  return (
+    <div className="w-fit rounded-md bg-gray-300 p-3 shadow">
+      <div className="w-fit rounded-sm bg-sky-700 px-2 text-white">
+        No. {user.id}
+      </div>
+      <div>
+        <div>
+          Name: {user.name.firstname} {user.name.lastname}
+        </div>
+        <div>Phone: {user.phone}</div>
+        <div>Email: {user.email}</div>
+      </div>
+    </div>
+  );
+};
+
+const ProductRow = ({ productId, quantity, handleAdd, handleSubtract }) => {
+  const { data: product, isSuccess } = useGetProductDetailQuery(productId, {
+    skip: !productId,
+  });
+  if (!isSuccess) {
+    return null;
+  }
+  return (
+    <TableRow key={product.id}>
+      <TableCell className="w-1/6">{product.id}</TableCell>
+      <TableCell className="w-3/6">{product.title}</TableCell>
+      <TableCell className="w-1/6">{quantity}</TableCell>
+      <TableCell className="w-1/6 space-x-2">
+        <button
+          onClick={() => handleSubtract(product.id)}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-3xl font-bold text-red-600 hover:bg-gray-300"
+        >
+          -
+        </button>
+        <button
+          onClick={() => handleAdd(product.id)}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-3xl font-bold text-green-600 hover:bg-gray-300"
+        >
+          +
+        </button>
+      </TableCell>
+    </TableRow>
+  );
+};

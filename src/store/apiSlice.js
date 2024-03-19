@@ -8,6 +8,12 @@ export const fakeStoreApi = createApi({
     getUserDetail: builder.query({
       query: (id) => `/users/${id}`,
     }),
+    getProductIds: builder.query({
+      query: () => `/products`,
+      transformResponse: (response) => {
+        return response.map((product) => product.id);
+      },
+    }),
     getProductDetail: builder.query({
       query: (id) => `/products/${id}`,
     }),
@@ -32,6 +38,7 @@ export const fakeStoreApi = createApi({
 
 export const {
   useGetUserDetailQuery,
+  useGetProductIdsQuery,
   useGetProductDetailQuery,
   useGetCartIdsQuery,
   useGetCartDetailQuery,
