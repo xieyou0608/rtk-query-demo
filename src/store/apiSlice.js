@@ -3,7 +3,8 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const fakeStoreApi = createApi({
   reducerPath: "fakeStoreApi",
   baseQuery: fetchBaseQuery({ baseUrl: "https://fakestoreapi.com" }),
-  keepUnusedDataFor: 0,
+  keepUnusedDataFor: 60, // use positive number to show the effect of tags.
+  tagTypes: ["Cart"],
   endpoints: (builder) => ({
     getUserDetail: builder.query({
       query: (id) => `/users/${id}`,
@@ -29,9 +30,14 @@ export const fakeStoreApi = createApi({
       transformResponse: (response) => {
         return response.map((cart) => cart.id);
       },
+      providesTags: (result, error, arg) => [
+        "Cart",
+        ...result.map((id) => ({ type: "Cart", id })),
+      ],
     }),
     getCartDetail: builder.query({
       query: (id) => `/carts/${id}`,
+      providesTags: (result, error, arg) => [{ type: "Cart", id: arg }],
     }),
     editCart: builder.mutation({
       query: (cartInfo) => ({
@@ -39,6 +45,7 @@ export const fakeStoreApi = createApi({
         method: "PUT",
         body: cartInfo,
       }),
+      invalidatesTags: (result, error, arg) => [{ type: "Cart", id: arg.id }],
     }),
   }),
 });
